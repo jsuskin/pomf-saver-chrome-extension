@@ -6,7 +6,8 @@
     "storage",
     "activeTab",
     "webRequest",
-    "scripting"
+    "scripting",
+    "notifications"
   ],
   "host_permissions": [
     "*://pomf2.lain.la/*"
@@ -28,5 +29,13 @@
     "16": "icons/icons8-shrug-lineal-color-16.png",
     "32": "icons/icons8-shrug-lineal-color-32.png",
     "96": "icons/icons8-shrug-lineal-color-96.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icons8-shrug-lineal-color-16.png",
+      "32": "icons/icons8-shrug-lineal-color-32.png",
+      "96": "icons/icons8-shrug-lineal-color-96.png"
+    }
   }
 }
