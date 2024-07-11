@@ -1,3 +1,101 @@
+let isPopupOpen = false;
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "start-auth") {
+    console.log("Received start-auth message");
+    firebaseAuth()
+      .then((result) => {
+        console.log("Authentication successful:", result);
+        sendResponse({ success: true });
+      })
+      .catch((error) => {
+        console.error("Authentication failed:", error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Ensure the sendResponse is called asynchronously
+  }
+});
+
+const OFFSCREEN_DOCUMENT_PATH = "/offscreen.html";
+
+// A global promise to avoid concurrency issues
+let creatingOffscreenDocument;
+
+async function hasDocument() {
+  const matchedClients = await clients.matchAll();
+  console.log("Matched clients: ", matchedClients);
+  return matchedClients.some(
+    (c) => c.url === chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)
+  );
+}
+
+async function setupOffscreenDocument(path) {
+  if (!(await hasDocument())) {
+    console.log("Does not have doc");
+    if (creatingOffscreenDocument) {
+      await creatingOffscreenDocument;
+    } else {
+      console.log("Creating offscreen doc");
+      creatingOffscreenDocument = chrome.offscreen.createDocument({
+        url: path,
+        reasons: [chrome.offscreen.Reason.DOM_SCRAPING],
+        justification: "authentication",
+      });
+      await creatingOffscreenDocument;
+      console.log("Created offscreen doc");
+      creatingOffscreenDocument = null;
+    }
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+}
+
+async function closeOffscreenDocument() {
+  if (!(await hasDocument())) {
+    console.log("No offscreen doc to close");
+    return;
+  }
+  await chrome.offscreen.closeDocument();
+  console.log("Closed offscreen doc");
+}
+
+function getAuth() {
+  return new Promise(async (resolve, reject) => {
+    console.log("Sending message to offscreen");
+    const auth = await chrome.runtime.sendMessage({
+      type: "start-auth",
+      target: "offscreen",
+    });
+    console.log("In getAuth promise", auth);
+    auth?.name !== "FirebaseError" ? resolve(auth) : reject(auth);
+  });
+}
+
+async function firebaseAuth() {
+  await setupOffscreenDocument(OFFSCREEN_DOCUMENT_PATH);
+
+  const auth = await getAuth()
+    .then((auth) => {
+      console.log("User Authenticated", auth);
+      return auth;
+    })
+    .catch((err) => {
+      if (err.code === "auth/operation-not-allowed") {
+        console.error(
+          "You must enable an OAuth provider in the Firebase" +
+            " console in order to use signInWithPopup. This sample" +
+            " uses Google by default."
+        );
+      } else {
+        console.error(err);
+        return err;
+      }
+    })
+    .finally(closeOffscreenDocument);
+
+  return auth;
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Pomf Saver Extension Installed");
 });
@@ -11,7 +109,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function saveUrlToFirebase(url) {
   try {
-    const response = await fetch("http://localhost:3000/api/save-url", {
+    const response = await fetch("https://localhost:3000/api/save-url", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

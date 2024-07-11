@@ -7,13 +7,14 @@
     "activeTab",
     "webRequest",
     "scripting",
-    "notifications"
+    "notifications",
+    "offscreen"
   ],
   "host_permissions": [
     "*://pomf2.lain.la/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "dist/background.bundle.js"
   },
   "content_scripts": [
     {
@@ -21,7 +22,7 @@
         "*://pomf2.lain.la/*"
       ],
       "js": [
-        "content.js"
+        "dist/content.bundle.js"
       ]
     }
   ],
@@ -37,5 +38,8 @@
       "32": "icons/icons8-shrug-lineal-color-32.png",
       "96": "icons/icons8-shrug-lineal-color-96.png"
     }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.googleapis.com https://www.gstatic.com https://www.googleapis.com https://securetoken.googleapis.com"
   }
 }
