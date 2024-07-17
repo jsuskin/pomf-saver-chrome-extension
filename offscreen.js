@@ -8,24 +8,18 @@ chrome.runtime.onMessage.addListener(handleChromeMessages);
 function handleChromeMessages(message, sender, sendResponse) {
   // Extensions may have an number of other reasons to send messages, so you
   // should filter out any that are not meant for the offscreen document.
-  if (message.target !== "offscreen") {
-    return false;
-  }
-
-  console.log("$$handleChromeMessages$$ Message received:", message);
+  if (message.target !== "offscreen") return false;
 
   function handleIframeMessage(event) {
-    console.log("$$handleIFrameMessage$$ before try/catch:", event.data);
     try {
       if (typeof event.data === "string" && event.data.startsWith("!_{")) {
         // Other parts of the Firebase library send messages using postMessage.
         // You don't care about them in this context, so return early.
         return;
       }
-      data = JSON.parse(event.  data);
+
+      data = JSON.parse(event.data);
       self.removeEventListener("message", handleIframeMessage);
-      console.log("$$handleIFrameMessage$$ Message from iframe:", data);
-      
       sendResponse(data);
     } catch (e) {
       console.log(`json parse failed - ${e.message}`);
@@ -33,12 +27,12 @@ function handleChromeMessages(message, sender, sendResponse) {
   }
 
   self.addEventListener("message", handleIframeMessage, false);
+  
+  if (message.type === "start-auth") {
+    iframe.contentWindow.postMessage({ initAuth: true }, new URL(_URL).origin);
+  } else if (message.type === "sign-out") {
+    iframe.contentWindow.postMessage({ signOut: true }, new URL(_URL).origin);
+  }
 
-  // Initialize the authentication flow in the iframed document. You must set the
-  // second argument (targetOrigin) of the message in order for it to be successfully
-  // delivered.
-  console.log("Sending message to iframe: ", { initAuth: true });
-  iframe.contentWindow.postMessage({ initAuth: true }, new URL(_URL).origin);
-  console.log("Message sent to iframe:", { initAuth: true });
   return true;
 }

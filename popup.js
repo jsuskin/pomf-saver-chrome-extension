@@ -1,8 +1,57 @@
 document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("login").addEventListener("click", () => {
-    chrome.runtime.sendMessage({ type: "start-auth" });
+  const loginButton = document.getElementById("login");
+  const signOutButton = document.createElement("button");
+  signOutButton.innerText = "Sign Out";
+  signOutButton.id = "sign-out";
+
+  function updateUI(isAuthenticated) {
+    console.log("updateUI: ", {isAuthenticated})
+    if (isAuthenticated) {
+      loginButton.style.display = "none";
+      signOutButton.style.display = "block";
+      document.body.appendChild(signOutButton);
+    } else {
+      loginButton.style.display = "block";
+      signOutButton.style.display = "none";
+    }
+  }
+
+  // Check authentication status
+  chrome.storage.local.get("isAuthenticated", (result) => {
+    updateUI(result.isAuthenticated);
+  });
+
+  // Add login event listener
+  loginButton.addEventListener("click", () => {
+    console.log("sign in button clicked")
+    chrome.runtime.sendMessage({ type: "start-auth" }, (response) => {
+      console.log("sign in callback")
+      if (response.success) {
+        chrome.storage.local.set({ isAuthenticated: true });
+      }
+    });
+  });
+
+  // Add sign out event listener
+  signOutButton.addEventListener("click", () => {
+    console.log("sign out button clicked");
+    chrome.runtime.sendMessage({ type: "sign-out" }, (response) => {
+      console.log('before set isAuthenticated false: ', {response})
+      chrome.storage.local.set({ isAuthenticated: false });
+      console.log("after set isAuthenticated false")
+    });
+    console.log("after auth listener")
+  });
+
+  // Listen for changes in authentication status
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    console.log("auth change detected")
+    if (areaName === "local" && changes.isAuthenticated) {
+      updateUI(changes.isAuthenticated.newValue);
+    }
   });
 });
+
 
 // document.addEventListener("DOMContentLoaded", function () {
 //   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {

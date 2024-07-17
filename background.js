@@ -1,19 +1,45 @@
-let isPopupOpen = false;
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Pomf Saver Extension Installed");
+
+  chrome.storage.local.get("isAuthenticated", (result) => {
+    if (result.isAuthenticated === undefined) {
+      chrome.storage.local.set({ isAuthenticated: false });
+    }
+  });
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.url) {
+    saveUrlToFirebase(message.url);
+  }
+
   if (message.type === "start-auth") {
-    console.log("Received start-auth message");
     firebaseAuth()
       .then((result) => {
         console.log("Authentication successful:", result);
+        chrome.storage.local.set({ isAuthenticated: true });
         sendResponse({ success: true });
       })
       .catch((error) => {
         console.error("Authentication failed:", error);
+        chrome.storage.local.set({ isAuthenticated: false });
         sendResponse({ success: false, error: error.message });
       });
-    return true; // Ensure the sendResponse is called asynchronously
-  }
+      return true; // Ensure the sendResponse is called asynchronously
+    } else if(message.type === 'sign-out') {
+      console.log("message type is sign out")
+      firebaseSignOut()
+        .then((result) => {
+          console.log("Sign out successful:", result);
+          chrome.storage.local.set({ isAuthenticated: false });
+          sendResponse({ success: true });
+        })
+        .catch((error) => {
+          console.error("Sign out failed:", error);
+          sendResponse({ success: false, error: error.message });
+        });
+        return true; // Ensure the sendResponse is called asynchronously
+    }
 });
 
 const OFFSCREEN_DOCUMENT_PATH = "/offscreen.html";
@@ -23,7 +49,6 @@ let creatingOffscreenDocument;
 
 async function hasDocument() {
   const matchedClients = await clients.matchAll();
-  console.log("Matched clients: ", matchedClients);
   return matchedClients.some(
     (c) => c.url === chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)
   );
@@ -31,18 +56,17 @@ async function hasDocument() {
 
 async function setupOffscreenDocument(path) {
   if (!(await hasDocument())) {
-    console.log("Does not have doc");
     if (creatingOffscreenDocument) {
       await creatingOffscreenDocument;
     } else {
-      console.log("Creating offscreen doc");
-      creatingOffscreenDocument = chrome.offscreen.createDocument({
+      // create offscreen doc
+      creatingOffscreenDocument = await chrome.offscreen.createDocument({
         url: path,
         reasons: [chrome.offscreen.Reason.DOM_SCRAPING],
         justification: "authentication",
       });
-      await creatingOffscreenDocument;
-      console.log("Created offscreen doc");
+
+      // cleanup offscreen doc
       creatingOffscreenDocument = null;
     }
   }
@@ -51,24 +75,49 @@ async function setupOffscreenDocument(path) {
 }
 
 async function closeOffscreenDocument() {
-  if (!(await hasDocument())) {
-    console.log("No offscreen doc to close");
-    return;
-  }
+  if (!(await hasDocument())) return;
   await chrome.offscreen.closeDocument();
-  console.log("Closed offscreen doc");
 }
 
 function getAuth() {
   return new Promise(async (resolve, reject) => {
-    console.log("Sending message to offscreen");
     const auth = await chrome.runtime.sendMessage({
       type: "start-auth",
       target: "offscreen",
     });
-    console.log("In getAuth promise", auth);
     auth?.name !== "FirebaseError" ? resolve(auth) : reject(auth);
   });
+}
+
+function signOutUser() {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const signOutResult = await chrome.runtime.sendMessage({
+        type: "sign-out",
+        target: "offscreen",
+      });
+      signOutResult?.success ? resolve(signOutResult) : reject(signOutResult);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function firebaseSignOut() {
+  await setupOffscreenDocument(OFFSCREEN_DOCUMENT_PATH);
+
+  const result = await signOutUser()
+    .then((result) => {
+      console.log("User Signed Out", result);
+      return result;
+    })
+    .catch((err) => {
+      console.error(err);
+      return err;
+    })
+    .finally(closeOffscreenDocument);
+
+  return result;
 }
 
 async function firebaseAuth() {
@@ -95,17 +144,6 @@ async function firebaseAuth() {
 
   return auth;
 }
-
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("Pomf Saver Extension Installed");
-});
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Message received:", message);
-  if (message.url) {
-    saveUrlToFirebase(message.url);
-  }
-});
 
 async function saveUrlToFirebase(url) {
   try {
