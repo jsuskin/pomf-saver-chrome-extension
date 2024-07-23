@@ -1,0 +1,28 @@
+body {
+  width: 300px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+#status {
+  margin-top: 10px;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+}
+
+marquee {
+  font-family: Tiny5;
+  font-size: 1.9em;
+  text-align: center;
+  padding-top: 4px;
+  color: #458a57;
+  background-color: #424242;
+}

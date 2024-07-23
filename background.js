@@ -161,7 +161,9 @@ async function saveUrlToFirebase(url) {
     console.log("URL saved to Firebase:", data);
 
     // Create a success notification
-    createNotification("URL saved successfully!");
+    createNotification("URL saved successfully!")
+      .then(() => console.log("Notification shown and cleared"))
+      .catch((error) => console.error("Error showing notification:", error));
 
     // Send success message to the popup
     chrome.runtime.sendMessage({
@@ -172,7 +174,9 @@ async function saveUrlToFirebase(url) {
     console.error("Failed to save URL to Firebase:", error);
 
     // Create an error notification
-    createNotification("Failed to save URL: " + error.message);
+    createNotification("Failed to save URL: " + error.message)
+      .then(() => console.log("Notification shown and cleared"))
+      .catch((error) => console.error("Error showing notification:", error));
 
     // Send failure message to the popup
     chrome.runtime.sendMessage({
@@ -191,9 +195,17 @@ function createNotification(message) {
       message: message,
     },
     function (notificationId) {
-      setTimeout(() => {
-        chrome.notifications.clear(notificationId);
-      }, 5000); // Auto close after 5 seconds
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        chrome.notifications.clear(notificationId, (wasCleared) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(wasCleared);
+          }
+        });
+      }
     }
   );
 }

@@ -1,53 +1,23 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-  <title>Popup</title>
-  <script src="popup.js"></script>
-</head>
-
-<body>
-  <button id="login">Log In with Google</button>
-</body>
-
-</html>
-
-
-<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pomf Saver</title>
-  <style>
-    body {
-      width: 300px;
-      font-family: Arial, sans-serif;
-    }
-
-    #status {
-      margin-top: 10px;
-    }
-
-    a {
-      color: blue;
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
   <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://apis.google.com; object-src 'self';">
-
 </head>
 
 <body>
   <h1>Pomf Saver</h1>
-  <div id="status">Checking current tab...</div>
-  <button id="sign-in-btn">Sign In with Google</button>
-  <button id="sign-out-btn" style="display: none;">Sign Out</button>
+  <div id="status"><marquee scrollamount="12"></marquee></div>
+  <button id="login">Log In with Google</button>
+  <button id="logout">Logout</button>
   <script src="dist/popup.bundle.js"></script>
 </body>
 
-</html> -->
+</html>
