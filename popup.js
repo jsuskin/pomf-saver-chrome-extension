@@ -1,10 +1,12 @@
+// const DEFAULT_STATUS_TEXT =
+//   'Please navigate to <a href="https://pomf2.lain.la/" target="_blank">https://pomf2.lain.la/</a> to use this extension or log in to <a href="https://localhost:3000/" target="_blank">https://localhost:3000/</a> with your Google account to view your saved Pomf URLs.';
 const DEFAULT_STATUS_TEXT =
-  'Please navigate to <a href="https://pomf2.lain.la/" target="_blank">https://pomf2.lain.la/</a> to use this extension or log in to <a href="http://localhost:3000/" target="_blank">http://localhost:3000/</a> with your Google account to view your saved Pomf URLs.';
+  'Please navigate to <a href="https://pomf2.lain.la/" target="_blank">https://pomf2.lain.la/</a> to use this extension or log in to <a href="https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/" target="_blank">https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/</a> with your Google account to view your saved Pomf URLs.';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loginButton = document.getElementById("login");
   const logoutButton = document.getElementById("logout");
-  
+
   const statusElement = document.getElementById("status");
   const marqueeElement = statusElement.querySelector("marquee");
 
@@ -43,11 +45,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Add login event listener
   loginButton.addEventListener("click", () => {
-    chrome.runtime.sendMessage({ type: "start-auth" }, (response) => {
-      if (response.success) {
-        chrome.storage.local.set({ isAuthenticated: true });
+    console.log("in login event handler");
+    chrome.runtime.sendMessage(
+      { type: "start-auth", target: "background" },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("Error in sendMessage: ", chrome.runtime.lastError);
+        } else {
+          console.log("in auth sendMessage response callback", response);
+          if (response?.success) {
+            chrome.storage.local.set({ isAuthenticated: true });
+          } else {
+            console.error(
+              "Authentication failed or no response:",
+              response?.error
+            );
+          }
+        }
       }
-    });
+    );
   });
 
   // Add sign out event listener

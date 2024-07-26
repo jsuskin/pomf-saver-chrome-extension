@@ -11,7 +11,8 @@
     "offscreen"
   ],
   "host_permissions": [
-    "*://pomf2.lain.la/*"
+    "*://pomf2.lain.la/*",
+    "https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
@@ -19,7 +20,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://pomf2.lain.la/*"
+        "*://pomf2.lain.la/*",
+        "https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/"
       ],
       "js": [
         "dist/content.bundle.js"
@@ -40,6 +42,6 @@
     }
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.googleapis.com https://www.gstatic.com https://www.googleapis.com https://securetoken.googleapis.com https://localhost:3000"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.googleapis.com https://www.gstatic.com https://www.googleapis.com https://securetoken.googleapis.com https://localhost:3000 https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/"
   }
 }

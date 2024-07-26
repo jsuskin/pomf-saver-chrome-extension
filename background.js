@@ -13,7 +13,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     saveUrlToFirebase(message.url);
   }
 
-  if (message.type === "start-auth") {
+  if (message.type === "start-auth" && message.target === "background") {
+    console.log("background message listener: ", {message})
     firebaseAuth()
       .then((result) => {
         console.log("Authentication successful:", result);
@@ -147,13 +148,17 @@ async function firebaseAuth() {
 
 async function saveUrlToFirebase(url) {
   try {
-    const response = await fetch("https://localhost:3000/api/save-url", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ url }),
-    });
+    // const response = await fetch("https://localhost:3000/api/save-url", {
+    const response = await fetch(
+      "https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/api/save-url",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      }
+    );
     if (!response.ok) {
       throw new Error("Network response was not ok " + response.statusText);
     }
@@ -161,9 +166,9 @@ async function saveUrlToFirebase(url) {
     console.log("URL saved to Firebase:", data);
 
     // Create a success notification
-    createNotification("URL saved successfully!")
-      .then(() => console.log("Notification shown and cleared"))
-      .catch((error) => console.error("Error showing notification:", error));
+    // createNotification("URL saved successfully!")
+    //   .then(() => console.log("Notification shown and cleared"))
+    //   .catch((error) => console.error("Error showing notification:", error));
 
     // Send success message to the popup
     chrome.runtime.sendMessage({
@@ -174,9 +179,9 @@ async function saveUrlToFirebase(url) {
     console.error("Failed to save URL to Firebase:", error);
 
     // Create an error notification
-    createNotification("Failed to save URL: " + error.message)
-      .then(() => console.log("Notification shown and cleared"))
-      .catch((error) => console.error("Error showing notification:", error));
+    // createNotification("Failed to save URL: " + error.message)
+    //   .then(() => console.log("Notification shown and cleared"))
+    //   .catch((error) => console.error("Error showing notification:", error));
 
     // Send failure message to the popup
     chrome.runtime.sendMessage({
@@ -186,26 +191,26 @@ async function saveUrlToFirebase(url) {
   }
 }
 
-function createNotification(message) {
-  chrome.notifications.create(
-    {
-      type: "basic",
-      iconUrl: "icons/icons8-shrug-lineal-color-32.png",
-      title: "Pomf Saver",
-      message: message,
-    },
-    function (notificationId) {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        chrome.notifications.clear(notificationId, (wasCleared) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(wasCleared);
-          }
-        });
-      }
-    }
-  );
-}
+// function createNotification(message) {
+//   chrome.notifications.create(
+//     {
+//       type: "basic",
+//       iconUrl: "icons/icons8-shrug-lineal-color-32.png",
+//       title: "Pomf Saver",
+//       message: message,
+//     },
+//     function (notificationId) {
+//       if (chrome.runtime.lastError) {
+//         reject(chrome.runtime.lastError);
+//       } else {
+//         chrome.notifications.clear(notificationId, (wasCleared) => {
+//           if (chrome.runtime.lastError) {
+//             reject(chrome.runtime.lastError);
+//           } else {
+//             resolve(wasCleared);
+//           }
+//         });
+//       }
+//     }
+//   );
+// }
