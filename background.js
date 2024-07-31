@@ -10,6 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.url) {
+    console.log("url success message received", {url: message.url})
     saveUrlToFirebase(message.url);
   }
 
@@ -148,6 +149,7 @@ async function firebaseAuth() {
 
 async function saveUrlToFirebase(url) {
   try {
+    console.log("in saveUrlToFirebase try block", {url})
     // const response = await fetch("https://localhost:3000/api/save-url", {
     const response = await fetch(
       "https://pomf-saver-cerhtunz6-jsuskins-projects.vercel.app/api/save-url",
@@ -163,6 +165,7 @@ async function saveUrlToFirebase(url) {
       throw new Error("Network response was not ok " + response.statusText);
     }
     const data = await response.json();
+    console.log("background.js response object: ", {response})
     console.log("URL saved to Firebase:", data);
 
     // Create a success notification
